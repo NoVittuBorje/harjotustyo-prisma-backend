@@ -1,0 +1,111 @@
+#root {
+  width: 100%;
+  font-family:Arial, Helvetica, sans-serif;
+}
+#body {
+  margin: 0;
+}
+.Appbar {
+  width: 100%;
+  padding: 0%;
+}
+.content {
+  display: flex;
+  width: 70%;
+  padding-left: 15%;
+  padding-right: 15%;
+}
+.feed{
+  margin-top: 1px;
+  border-radius: 20px;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size: medium;
+  
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+.center {
+  margin: auto;
+  width: auto;
+}
+.footer{
+  align-items: center;
+  flex-direction: row;
+  display: flex;
+ 
+
+}
+.footerkarma{
+  align-items: center;
+  flex-direction: row;
+  display: flex;
+  padding: 0;
+  border-radius: 50px;
+  align-content: center;
+  text-align: center;
+}
+
+.feed:hover{
+  background-color: ""
+}
+
+
+.avatar {
+  flex: 0 0 var(--size);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+}
+
+.feedDesc {
+   overflow: hidden;
+   display: -webkit-box;
+   -webkit-line-clamp: 8; /* number of lines to show */
+           line-clamp: 8; 
+   -webkit-box-orient: vertical;
+}
+.postDesc {
+  display: flexbox;
+  padding: 1%;
+  font-size: medium;
+  white-space: pre-wrap;
+}
+.button{
+  border-radius: 50px;
+  
+}
+.button:hover {
+  border-radius: 50px;
+}
+
+
+p{
+  margin-top: 0;
+  margin-bottom: 0;
+}
+h1{
+    margin-top: 0;
+  margin-bottom: 0;
+}
+
+h2{
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.rsw-editor{
+  width: 100%;
+}
+.rsw-toolbar{
+  width: 100%;
+}
+.rsw-ce{
+  width: 100%;
+}
+.imagecontainer{
+  display:flex;
+  justify-content:center;
+  border-radius: 20px;
+}
+.error{
+  color: var(--mui-palette-error-main)
+}

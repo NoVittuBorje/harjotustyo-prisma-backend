@@ -47,7 +47,7 @@ const Homescreen = ({ User,setmessage,setseverity }) => {
   const UserSubs = () => {
     if(!User){return}
 
-    if(User.feedsubs.length > 0){
+    if(User.feedSubs.length > 0){
       return(
         <MenuItem value={"SUBSCRIPTIONS"}>Subscriptions</MenuItem>
       )
@@ -56,7 +56,7 @@ const Homescreen = ({ User,setmessage,setseverity }) => {
   }
   const UserFeeds = () => {
     if(!User){return}
-    if(User.ownedfeeds.length > 0){
+    if(User.ownedFeeds.length > 0){
       return(
         <MenuItem value={"OWNEDFEEDS"}>Owned feeds</MenuItem>
       )

@@ -706,8 +706,8 @@ export default function PrimarySearchAppBar({
     if (!User) {
       return;
     }
-    const friendsRequests = User.friendsRequests;
-    const chatinvites = User.chatroominvites;
+    const friendRequests = User.User_UserFriendRequests_A.concat(User.User_UserFriendRequests_B)
+    const chatinvites = User.chatroomInvites ? User.chatroomInvites : [];
     return (
       <>
         <IconButton
@@ -720,7 +720,7 @@ export default function PrimarySearchAppBar({
           color="inherit"
         >
           <Badge
-            badgeContent={friendsRequests.length + chatinvites.length}
+            badgeContent={friendRequests.length + chatinvites.length}
             color="error"
           >
             <NotificationsIcon />
@@ -733,12 +733,15 @@ export default function PrimarySearchAppBar({
     if (!User) {
       return;
     }
+    
     const FriendRequests = ({ User }) => {
-      if (User.friendsRequests.length > 0) {
+      const friendRequests = User.User_UserFriendRequests_A.concat(User.User_UserFriendRequests_B)
+      console.log(friendRequests)
+      if (friendRequests.length > 0) {
         return (
           <>
             <Typography>Friends requests</Typography>
-            {User.friendsRequests.map((item) => {
+            {friendRequests.map((item) => {
               return (
                 <MenuItem sx={{ borderRadius: 5 }}>
                   <Typography onClick={() => navigate(`/profile/${item.id}`)}>
@@ -776,17 +779,17 @@ export default function PrimarySearchAppBar({
           </>
         );
       }
-      if (User.chatroominvites.length + User.friendsRequests.length == 0) {
+      if (User.chatroomInvites.length + friendRequests.length == 0) {
         return <Typography>No notifications</Typography>;
       }
       return;
     };
     const ChatInvites = ({ User }) => {
-      if (User.chatroominvites.length > 0) {
+      if (User.chatroomInvites.length > 0) {
         return (
           <>
             <Typography>Chat invites</Typography>
-            {User.chatroominvites.map((item) => {
+            {User.chatroomInvites.map((item) => {
               return (
                 <MenuItem sx={{ borderRadius: 5 }}>
                   <Typography>{item.name}</Typography>

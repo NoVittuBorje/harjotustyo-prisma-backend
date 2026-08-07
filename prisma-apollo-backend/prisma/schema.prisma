@@ -1,146 +1,147 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider   = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model Comments {
-  id        String   @id @default(cuid())
-  content   String
-  karma     Int      @default(0)
-  depth     Int      @default(0)
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @db.Timestamptz(6)
-  userId    String
-  postId    String
-
-  commentId String?
-  replyto   Comments?  @relation("Replies", fields: [commentId], references: [id])
-  replies   Comments[] @relation("Replies")
-
-  post  Posts @relation(fields: [postId], references: [id])
-  owner Users @relation(fields: [userId], references: [id])
-
-  likes    Users[] @relation(name: "LikedComments")
-  dislikes Users[] @relation(name: "DislikedComments")
+model User {
+  id                            Int                 @id @default(autoincrement())
+  username                      String              @unique
+  email                         String              @unique
+  password_hash                 String
+  nationality                   String?
+  firstname                     String?
+  lastname                      String?
+  avatar                        String?
+  userKarma                     Int                 @default(0)
+  relationship                  RelationshipStatus?
+  description                   String?
+  work                          WorkStatus?
+  active                        Boolean             @default(true)
+  createdAt                     DateTime            @default(now())
+  updatedAt                     DateTime            @updatedAt
+  comments                      Comment[]           @relation("UserComments")
+  ownedFeeds                    Feed[]              @relation("FeedOwner")
+  messages                      Message[]
+  posts                         Post[]              @relation("UserPosts")
+  ownedRooms                    Room[]              @relation("RoomOwner")
+  bannedFromFeeds               Feed[]              @relation("FeedBannedUsers")
+  moderatedFeeds                Feed[]              @relation("FeedModerators")
+  chatroomInvites               Room[]              @relation("UserChatroomInvites")
+  chatrooms                     Room[]              @relation("UserChatrooms")
+  dislikedComments              Comment[]           @relation("UserDislikedComments")
+  dislikedPosts                 Post[]              @relation("UserDislikedPosts")
+  feedSubs                      Feed[]              @relation("UserFeedSubs")
+  User_UserFriendRequests_A     User[]              @relation("UserFriendRequests")
+  User_UserFriendRequests_B     User[]              @relation("UserFriendRequests")
+  User_UserFriendRequestsSent_A User[]              @relation("UserFriendRequestsSent")
+  User_UserFriendRequestsSent_B User[]              @relation("UserFriendRequestsSent")
+  User_UserFriends_A            User[]              @relation("UserFriends")
+  User_UserFriends_B            User[]              @relation("UserFriends")
+  likedComments                 Comment[]           @relation("UserLikedComments")
+  likedPosts                    Post[]              @relation("UserLikedPosts")
 }
 
-model Feeds {
-  id          String   @id @default(cuid())
-  feedname    String   @unique @db.VarChar(20)
+model Post {
+  id            Int       @id @default(autoincrement())
+  headline      String?
+  description   String?
+  karma         Int?
+  commentsCount Int       @default(0)
+  img           String?
+  locked        Boolean   @default(false)
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  ownerId       Int?
+  feedId        Int?
+  comments      Comment[] @relation("PostComments")
+  feed          Feed?     @relation("FeedPosts", fields: [feedId], references: [id])
+  owner         User?     @relation("UserPosts", fields: [ownerId], references: [id])
+  dislikedBy    User[]    @relation("UserDislikedPosts")
+  likedBy       User[]    @relation("UserLikedPosts")
+}
+
+model Feed {
+  id          Int      @id @default(autoincrement())
+  feedname    String   @unique
   description String
-  feedavatar  String?  @db.VarChar(255)
+  feedavatar  String?
   subsCount   Int      @default(0)
   active      Boolean  @default(true)
-  createdAt   DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
-  userId      String
-  owner       Users    @relation(fields: [userId], references: [id])
-  posts       Posts[]
-  subs        Users[]  @relation(name: "FeedSubscriptions")
-  moderators  Users[]  @relation(name: "FeedModerator")
-
-  feedchat Rooms?  @relation(name: "FeedChatRoom", fields: [roomsId], references: [id])
-  roomsId  String? @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  ownerId     Int?
+  chatRoomId  Int?     @unique
+  chatRoom    Room?    @relation("FeedChatRoom", fields: [chatRoomId], references: [id])
+  owner       User?    @relation("FeedOwner", fields: [ownerId], references: [id])
+  posts       Post[]   @relation("FeedPosts")
+  bannedusers User[]   @relation("FeedBannedUsers")
+  moderators  User[]   @relation("FeedModerators")
+  subs        User[]   @relation("UserFeedSubs")
 }
 
-model Messages {
-  id        String   @id @default(cuid())
-  content   String   @db.VarChar(255)
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @db.Timestamptz(6)
-  userId    String
-  owner     Users    @relation(fields: [userId], references: [id])
-  room      Rooms    @relation(name: "ChatMessages", fields: [roomsId], references: [id])
-  roomsId   String
+model Comment {
+  id         Int       @id @default(autoincrement())
+  content    String?
+  karma      Int       @default(0)
+  depth      Int       @default(0)
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  postId     Int?
+  userId     Int?
+  replyToId  Int?
+  post       Post?     @relation("PostComments", fields: [postId], references: [id])
+  replyto    Comment?  @relation("CommentReplies", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies    Comment[] @relation("CommentReplies")
+  user       User?     @relation("UserComments", fields: [userId], references: [id])
+  dislikedBy User[]    @relation("UserDislikedComments")
+  likedBy    User[]    @relation("UserLikedComments")
 }
 
-model Posts {
-  id            String     @id @default(cuid())
-  headline      String     @db.VarChar(255)
-  description   String
-  karma         Int        @default(0)
-  commentsCount Int        @default(0)
-  img           String?    @db.VarChar(255)
-  active        Boolean    @default(true)
-  locked        Boolean    @default(false)
-  createdAt     DateTime   @default(now()) @db.Timestamptz(6)
-  updatedAt     DateTime   @updatedAt @db.Timestamptz(6)
-  userId        String
-  feedId        String
-  comments      Comments[]
-  feed          Feeds      @relation(fields: [feedId], references: [id])
-  owner         Users      @relation(fields: [userId], references: [id])
-  likes         Users[]    @relation(name: "LikedPosts")
-  dislikes      Users[]    @relation(name: "DislikedPosts")
+model Room {
+  id           Int       @id @default(autoincrement())
+  name         String
+  type         RoomType?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  ownerId      Int?
+  feed         Feed?     @relation("FeedChatRoom")
+  messages     Message[]
+  owner        User?     @relation("RoomOwner", fields: [ownerId], references: [id])
+  invitedUsers User[]    @relation("UserChatroomInvites")
+  users        User[]    @relation("UserChatrooms")
 }
 
-model Rooms {
-  id        String     @id @default(cuid())
-  name      String     @unique @db.VarChar(255)
-  type      String     @db.VarChar(255)
-  createdAt DateTime   @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime   @updatedAt @db.Timestamptz(6)
-  userId    String
-  owner     Users      @relation(fields: [userId], references: [id])
-  users     Users[]    @relation(name: "InChatroom")
-  feed      Feeds?     @relation(name: "FeedChatRoom")
-  messages  Messages[] @relation(name: "ChatMessages")
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  authorId  Int
+  roomId    Int
+  author    User     @relation(fields: [authorId], references: [id])
+  room      Room     @relation(fields: [roomId], references: [id])
 }
 
-model Users {
-  id            String       @id @default(cuid())
-  username      String       @unique @db.VarChar(255)
-  email         String       @unique @db.VarChar(255)
-  password_hash String       @db.VarChar(255)
-  nationality   String?      @db.VarChar(255)
-  firstname     String?      @db.VarChar(255)
-  lastname      String?      @db.VarChar(255)
-  avatar        String?      @db.VarChar(255)
-  userKarma     Int          @default(0)
-  relationship  String?      @db.VarChar(255)
-  description   String?
-  work          String?      @db.VarChar(255)
-  active        Boolean      @default(true)
-  createdAt     DateTime     @default(now()) @db.Timestamptz(6)
-  updatedAt     DateTime     @updatedAt @db.Timestamptz(6)
-  comments      Comments[]
-  ownedfeeds    Feeds[]
-  friendOf      Friendship[] @relation("FriendFriendships")
-  friendships   Friendship[] @relation("UserFriendships")
-  messages      Messages[]
-  posts         Posts[]
-  chatrooms     Rooms[]      @relation(name: "InChatroom")
-  feedsubs      Feeds[]      @relation(name: "FeedSubscriptions")
-
-  moderatorFor Feeds[] @relation(name: "FeedModerator")
-
-  likedposts    Posts[] @relation(name: "LikedPosts")
-  dislikedposts Posts[] @relation(name: "DislikedPosts")
-
-  likedcomments    Comments[] @relation(name: "LikedComments")
-  dislikedcomments Comments[] @relation(name: "DislikedComments")
-  rooms            Rooms[]
+enum RelationshipStatus {
+  Single
+  Married
+  Dating
+  Other
 }
 
-model Friendship {
-  id        String   @id @default(cuid())
-  userId    String
-  friendId  String
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  friend    Users    @relation("FriendFriendships", fields: [friendId], references: [id])
-  user      Users    @relation("UserFriendships", fields: [userId], references: [id])
-
-  @@unique([userId, friendId])
-  @@unique([friendId, userId])
+enum WorkStatus {
+  Working
+  Unemployed
+  Retired
 }
 
-model active_sessions {
-  id     Int      @id @default(autoincrement())
-  token  String   @db.VarChar(255)
-  active Boolean? @default(true)
+enum RoomType {
+  GROUP
+  FEED
+  PRIVATE
 }

@@ -51,24 +51,27 @@ const typeDefs =`#graphql
     avatar:String
     relationship:String
     description:String
-    dislikedposts:[Post]
-    likedposts:[Post]
-    likedcomments:[Comment]
-    dislikedcomments:[Comment]
+    dislikedPosts:[Post]
+    likedPosts:[Post]
+    likedComments:[Comment]
+    dislikedComments:[Comment]
     work:String
-    feedsubs:[Feed]
+    feedSubs:[Feed]
     nationality:String
     posts:[Post]
-    ownedfeeds:[Feed]
+    ownedFeeds:[Feed]
     userKarma:Int
     active:Boolean
     comments:[Comment]
     createdAt:String
     chatrooms:[Room]
-    chatroominvites:[Room]
-    friends:[User]
-    friendsRequests:[User]
-    friendsRequestsSent:[User]
+    chatroomInvites:[Room]
+    User_UserFriendRequests_A:[User]
+    User_UserFriendRequests_B:[User]
+    User_UserFriendRequestsSent_A:[User]
+    User_UserFriendRequestsSent_B:[User]
+    User_UserFriends_A:[User]
+    User_UserFriends_B:[User]
     id: ID!
   }
   scalar Date

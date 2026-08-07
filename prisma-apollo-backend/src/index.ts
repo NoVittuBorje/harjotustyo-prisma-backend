@@ -20,6 +20,7 @@ import typeDefs from "./schema/typedefs";
 import resolvers from "./schema/resolvers";
 import { prisma } from "../prisma/prisma";
 
+
 var linktofrontend = "http://localhost:5173";
 var hostname = "localhost";
 
@@ -72,36 +73,54 @@ const start = async () => {
   await server.start();
 
   app.use(
-    "/",
-    cors<cors.CorsRequest>(),
-    express.json({ limit: "50mb" }),
-    expressMiddleware(server, {
-      context: async ({ req }) => {
-        const auth = req ? req.headers.authorization : null;
-        if (auth && auth.startsWith("Bearer ")) {
+  "/",
+  cors<cors.CorsRequest>(),
+  express.json({ limit: "50mb" }),
+  expressMiddleware(server, {
+    context: async ({ req }) => {
+      let currentUser = null; 
+      
+      const auth = req ? req.headers.authorization : null;
+      console.log(auth)
+      if (auth && auth.startsWith("Bearer ")) {
+        try {
           const decodedToken = <any>(
-            jwt.verify(auth.substring(7), process.env.JWT_SECRET)
+            jwt.verify(auth.substring(7), process.env.JWT_SECRET!)
           );
-          console.log(decodedToken);
-          const currentUser = await prisma.users.findFirst({
+          
+          currentUser = await prisma.user.findFirst({
             where: { id: decodedToken.id },
             include: {
-              ownedfeeds: true,
+              ownedFeeds: true,
               posts: true,
-              feedsubs: true,
-              chatrooms: true,
-              likedcomments: true,
-              dislikedcomments: true,
-              likedposts: true,
-              dislikedposts: true,
-              friendOf:true
+              feedSubs: true,
+              likedComments: true,
+              dislikedComments: true,
+              likedPosts: true,
+              dislikedPosts: true,
+              chatrooms:true,
+              ownedRooms: true,
+              bannedFromFeeds: true,
+              moderatedFeeds: true,
+              chatroomInvites: true,
+              User_UserFriendRequests_A: true,
+              User_UserFriendRequests_B: true,
+              User_UserFriendRequestsSent_A: true,
+              User_UserFriendRequestsSent_B: true,
+              User_UserFriends_A: true,
+              User_UserFriends_B: true
             },
           });
-          return { currentUser };
+          console.log(currentUser)
+        } catch (error) {
+          console.error("JWT verification failed:", error);
         }
-      },
-    })
-  );
+      }
+
+      return { prisma, currentUser };
+    },
+  })
+);
 
   const PORT = 3000;
 

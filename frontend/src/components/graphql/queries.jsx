@@ -1,63 +1,75 @@
 import { gql } from "@apollo/client";
 
 export const GET_ME = gql`
-  query Query {
-    me {
-      username
-      email
-      firstname
-      lastname
-      avatar
-      relationship
-      description
-      nationality
-      work
-      userKarma
-      feedsubs {
-        feedname
-        id
-      }
-      ownedfeeds {
-        feedname
-        id
-      }
-      active
+query Me {
+  me {
+    username
+    id
+    email
+    firstname
+    lastname
+    avatar
+    relationship
+    description
+    work
+    nationality
+    userKarma
+    active
+    createdAt
+    feedSubs {
+      feedname
       id
-      dislikedposts {
-        id
-      }
-      likedposts {
-        id
-      }
-      likedcomments {
-        id
-      }
-      dislikedcomments {
-        id
-      }
-      friends {
-        id
-        username
-        avatar
-      }
-      friendsRequests {
-        id
-        username
-      }
-      friendsRequestsSent {
-        id
-        username
-      }
-      chatrooms {
-        id
-        name
-      }
-      chatroominvites {
-        id
-        name
-      }
+    }
+    ownedFeeds {
+      feedname
+      id
+    }
+    dislikedPosts {
+      id
+    }
+    likedPosts {
+      id
+    }
+    dislikedComments {
+      id
+    }
+    likedComments {
+      id
+    }
+    chatroomInvites {
+      id
+      name
+    }
+    chatrooms {
+      id
+      name
+    }
+    User_UserFriendRequestsSent_A {
+      id
+      username
+    }
+    User_UserFriendRequestsSent_B {
+      id
+      username
+    }
+    User_UserFriendRequests_A {
+      id
+      username
+    }
+    User_UserFriendRequests_B {
+      id
+      username
+    }
+    User_UserFriends_A {
+      username
+      id
+    }
+    User_UserFriends_B {
+      id
+      username
     }
   }
+}
 `;
 export const GET_FEED = gql`
   query Getfeed($querytype: String!, $feedname: String) {

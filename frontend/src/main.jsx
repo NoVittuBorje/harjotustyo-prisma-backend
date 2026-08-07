@@ -28,7 +28,7 @@ const authLink = setContext((_, { headers }) => {
 
 
 const env = environment()
-
+console.log(env)
 const httpLink = createUploadLink({
   uri: `${env.linktobackend}`,
 });

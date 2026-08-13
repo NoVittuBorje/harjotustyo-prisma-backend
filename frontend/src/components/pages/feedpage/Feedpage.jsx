@@ -236,6 +236,7 @@ const FeedPage = ({ match, User, refetchUser, setmessage, setseverity }) => {
             setOpen={setFeedEditOpen}
             handleSave={handleSave}
             feed={info ? info.description : null}
+            feedid={info.id}
           ></EditFeedDesc>
         </Collapse>
       );
@@ -247,7 +248,7 @@ const FeedPage = ({ match, User, refetchUser, setmessage, setseverity }) => {
     if (!User) {
       return;
     }
-    if (!User.feedsubs.find((e) => e.feedname === feedname)) {
+    if (!User.feedSubs.find((e) => e.feedname === feedname)) {
       return (
         <Box sx={{ verticalAlign: "middle" }}>
           <Button

@@ -25,8 +25,8 @@ const KarmaItem = ({ type, id, karma, User, setmessage, setseverity }) => {
     }
 
     if (type == "post") {
-      var likesid = User.likedposts.map((i) => i.id);
-      var dislikesid = User.dislikedposts.map((i) => i.id);
+      var likesid = User.likedPosts.map((i) => i.id);
+      var dislikesid = User.dislikedPosts.map((i) => i.id);
       if (likesid.includes(id)) {
         setLiked(true);
         setDisliked(false);
@@ -41,8 +41,8 @@ const KarmaItem = ({ type, id, karma, User, setmessage, setseverity }) => {
       }
     }
     if (type == "comment") {
-      var likesid2 = User.likedcomments.map((i) => i.id);
-      var dislikesid2 = User.dislikedcomments.map((i) => i.id);
+      var likesid2 = User.likedComments.map((i) => i.id);
+      var dislikesid2 = User.dislikedComments.map((i) => i.id);
       if (likesid2.includes(id)) {
         setLiked(true);
         setDisliked(false);

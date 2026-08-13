@@ -4,8 +4,7 @@ import * as yup from "yup";
 import TextEditor from "../../utils/TextEditor";
 import { Box, Button} from "@mui/material";
 
-const EditFeedDesc = ({ feed, handleSave, setOpen }) => {
-  
+const EditFeedDesc = ({ feed, handleSave, setOpen,feedid }) => {
   const validationSchema = yup.object().shape({
     description: yup.string().min(10).required(),
   });
@@ -13,7 +12,7 @@ const EditFeedDesc = ({ feed, handleSave, setOpen }) => {
   const formik = useFormik({
     initialValues: {
       description: description,
-      feedid:feed.id
+      feedid:feedid
     },
     onSubmit: (values) => {
       handleSave({ content: values.description, feedid: values.feedid,action:"editdesc" });

@@ -74,7 +74,8 @@ const ProfileFeed = ({ type, id, userdata, User, setmessage, setseverity }) => {
 };
 const Profilepage = ({ User, match, setmessage, setseverity }) => {
   const [type, setType] = useState("posts");
-  const id = match.params.userid;
+  let id = match.params.userid;
+  id = Number(id)
   const userdata = useGetUser({ id: id });
   const handleChange = (event) => {
     setType(event.target.value);
@@ -137,17 +138,17 @@ const Profilepage = ({ User, match, setmessage, setseverity }) => {
                   }}
                 >
                   <Typography>{`Disliked posts: ${
-                    profiledata.dislikedposts
-                      ? profiledata.dislikedposts.length
+                    profiledata.dislikedPosts
+                      ? profiledata.dislikedPosts.length
                       : "0"
                   }`}</Typography>
                   <Typography>{`Disliked comments: ${
-                    profiledata.dislikedcomments
-                      ? profiledata.dislikedcomments.length
+                    profiledata.dislikedComments
+                      ? profiledata.dislikedComments.length
                       : "0"
                   }`}</Typography>
                   <Typography>{`Subs:  ${
-                    profiledata.feedsubs ? profiledata.feedsubs.length : "0"
+                    profiledata.feedSubs ? profiledata.feedSubs.length : "0"
                   }`}</Typography>
                 </Grid>
                 <Grid
@@ -158,15 +159,15 @@ const Profilepage = ({ User, match, setmessage, setseverity }) => {
                   }}
                 >
                   <Typography>{`Liked posts: ${
-                    profiledata.likedposts ? profiledata.likedposts.length : "0"
+                    profiledata.likedPosts ? profiledata.likedPosts.length : "0"
                   }`}</Typography>
                   <Typography>{`Liked comments: ${
-                    profiledata.likedcomments
-                      ? profiledata.likedcomments.length
+                    profiledata.likedComments
+                      ? profiledata.likedComments.length
                       : "0"
                   }`}</Typography>
                   <Typography>{`Owned feeds: ${
-                    profiledata.ownedfeeds ? profiledata.ownedfeeds.length : "0"
+                    profiledata.ownedFeeds ? profiledata.ownedFeeds.length : "0"
                   }`}</Typography>
                 </Grid>
               </Grid>

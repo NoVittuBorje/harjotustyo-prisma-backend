@@ -4,7 +4,9 @@ import bcrypt from "bcrypt";
 import "dotenv/config";
 import { GraphQLError } from "graphql";
 import { connect } from "node:http2";
+import sanitizeHtml from 'sanitize-html';
 
+import { v4 as uuidv4 } from 'uuid';
 import { PubSub, withFilter } from "graphql-subscriptions";
 const pubsub = new PubSub();
 const MESSAGE_SENT = "messageSent";
@@ -44,7 +46,6 @@ const resolvers = {
     },
     me: async (root: any, args: any, context: { prisma:any,currentUser: any; }) => {
       const user = context.currentUser;
-      console.log(user)
       return user;
     },
     getfeed: async (root: any, args: { feedname: any; }, context: any) => {
@@ -56,7 +57,7 @@ const resolvers = {
           owner: true,
           moderators: true,
           subs: true,
-          feedchat: { include: { owner: true, users: true } },
+          chatRoom: { include: { owner: true, users: true } },
         },
       });
       console.log(feed);
@@ -148,8 +149,8 @@ const resolvers = {
       const comments = await prisma.comment.findMany({
         where: { id: args.commentid },
         include: {
-          owner: true,
-          replies: { include: { owner: true, replies: true } },
+          user: true,
+          replies: { include: { user: true, replies: true } },
         },
       });
       console.log(comments);
@@ -246,7 +247,7 @@ const resolvers = {
         },
         include: {
           replies: true,
-          owner: true,
+          user: true,
         },
         orderBy: { karma: "desc" },
         skip: args.offset,
@@ -374,8 +375,10 @@ const resolvers = {
           feedname: args.feedname,
           description: args.description,
         },
+        include: {
+          owner: true,
+        },
       });
-      console.log(feed);
       return feed;
     },
     makePost: async (root: any, args: { feedname: any; headline: any; description: any; }, context: { currentUser: { id: any; }; }) => {
@@ -407,14 +410,15 @@ const resolvers = {
       const post = await prisma.post.findFirst({
         where: { id: args.postid },
       });
+      console.log(post)
       if (!args.replyto) {
         const comment = await prisma.comment.create({
           data: {
-            owner: { connect: { id: context.currentUser.id } },
+            user: { connect: { id: context.currentUser.id } },
             post: { connect: { id: post.id } },
             content: args.content,
           },
-          include: { owner: true },
+          include: { user: true ,post:true},
         });
         const updatePost = await prisma.post.update({
           where: { id: post.id },
@@ -432,13 +436,13 @@ const resolvers = {
         });
         const comment = await prisma.comment.create({
           data: {
-            owner: { connect: { id: context.currentUser.id } },
+            user: { connect: { id: context.currentUser.id } },
             replyto: { connect: { id: replytocomment.id } },
             post: { connect: { id: post.id } },
             content: args.content,
             depth: replytocomment.depth + 1,
           },
-          include: { owner: true, replyto: true },
+          include: { user: true, replyto: true},
         });
         const updatePost = await prisma.post.update({
           where: { id: post.id },
@@ -450,10 +454,366 @@ const resolvers = {
         });
         const updatedComment = await prisma.comment.findFirst({
           where: { id: args.replyto },
-          include: { owner: true, replies: { include: { owner: true } } },
+          include: { user: true,post:true, replies: { include: { user: true } } },
         });
 
         return updatedComment;
+      }
+    },
+    modifyComment: async (root: any, args:{commentid: any,action:string,content:string,}, context: { currentUser: { id: any; }; }) => {
+      const user = context.currentUser;
+      
+      const comment = await prisma.comment.findUnique({
+        where: { id: args.commentid },
+        include: { user: { select: { id: true } } }
+      });
+
+      if (!comment) throw new GraphQLError("Comment not found");
+
+      const isOwner = comment.user.id === user.id;
+
+      if (args.action === "delete" && isOwner) {
+        return await prisma.comment.update({
+          where: { id: args.commentid },
+          data: { content: "This comment has been deleted by the user." }
+        });
+      }
+
+      if (args.action === "edit" && isOwner) {
+        return await prisma.comment.update({
+          where: { id: args.commentid },
+          data: { content: args.content }
+        });
+      }
+
+      throw new GraphQLError("unknown operation", {
+        extensions: { code: "UNKNOWN ACTION" },
+      });
+    },
+
+    modifyPost: async (root: any, args: { postid: any; action: string; content: string; }, context: { currentUser: any; }) => {
+      const user = context.currentUser;
+      
+      const post = await prisma.post.findUnique({
+        where: { id: args.postid },
+        include: { owner: { select: { id: true } } }
+      });
+
+      if (!post) throw new GraphQLError("Post not found");
+
+      const isOwner = post.owner.id === user.id;
+
+      if (args.action === "delete" && isOwner) {
+        return await prisma.post.update({
+          where: { id: args.postid },
+          data: {
+            headline: "Post has been deleted by the owner!",
+            description: "<u>This post has been deleted by <b>Owner</b></u>",
+            img: null
+          }
+        });
+      }
+      
+      if (args.action === "edit" && isOwner) {
+        if (post.locked === true) {
+          throw new GraphQLError("Post is locked cant modify post");
+        }
+        return await prisma.post.update({
+          where: { id: args.postid },
+          data: { content: sanitizeHtml(args.content) }
+        });
+      }
+
+      throw new GraphQLError("unknown operation", {
+        extensions: { code: "UNKNOWN ACTION" },
+      });
+    },
+
+    modifyUser: async (root: any, args: { type: string; content: string; }, context: { currentUser: any; }) => {
+      const user = context.currentUser;
+      
+
+      const directFields = ["Avatar", "Description", "Email", "Username", "Firstname", "Lastname", "Relationship", "Work", "Nationality"];
+      
+      if (directFields.includes(args.type)) {
+        try {
+          const fieldName = args.type.toLowerCase();
+          const content = (args.type === "Description" || args.type === "Username") 
+            ? sanitizeHtml(args.content) 
+            : args.content;
+
+          return await prisma.user.update({
+            where: { id: user.id },
+            data: { [fieldName]: content }
+          });
+        } catch (e) {
+          throw new GraphQLError(e.message || e);
+        }
+      }
+
+      // Kaverin poistaminen (Mongoose $pull -> Prisma disconnect)
+      if (args.type === "removefriend") {
+        return await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            friends: {
+              disconnect: { id: args.content }
+            }
+          },
+          include: {
+            friends: {
+              select: { id: true, username: true, avatar: true }
+            }
+          }
+        });
+      }
+
+      if (args.type === "Deleteuser") {
+        try {
+          return await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              username: "Deleted_User",
+              active: false,
+              email: "deleted",
+              nationality: null,
+              work: null,
+              relationship: null,
+              firstname: null,
+              lastname: null,
+              description: null,
+              avatar: null,
+              password_hash: uuidv4()
+            }
+          });
+        } catch (e) {
+          throw new GraphQLError(e.message || e);
+        }
+      }
+    },
+
+    modifyFeed: async (root: any, args: { feedid: any; action: string; content: any; }, context: { currentUser: any; }) => {
+      
+      const feed = await prisma.feed.findUnique({
+        where: { id: args.feedid },
+        include: {
+          bannedusers: { select: { id: true } },
+          moderators: { select: { id: true } },
+          owner: { select: { id: true } },
+        },
+      });
+      console.log(feed)
+      if (!feed) throw new GraphQLError("Feed not found");
+
+      const mods = feed.moderators.map((i:any) => i.id);
+      const bannedusers = feed.bannedusers.map((i:any) => i.id);
+      const user = context.currentUser;
+      const userIdStr = user.id;
+
+
+      const feedIncludeReturn = {
+        bannedusers: { select: { id: true, username: true } },
+        moderators: { select: { id: true, username: true } },
+        owner: { select: { id: true, username: true } },
+      };
+
+
+      if (mods.includes(userIdStr) || feed.ownerId === userIdStr) {
+
+        if (args.action === "mod" && feed.ownerId === userIdStr) {
+          try {
+            return await prisma.feed.update({
+              where: { id: feed.id },
+              data: {
+                moderators: {
+                  connect: { id: Number(args.content) },
+                },
+              },
+              include: feedIncludeReturn,
+            });
+          } catch (e) {
+            throw new GraphQLError(e);
+          }
+        }
+
+
+        if (args.action === "unmod" && feed.owner.id === userIdStr) {
+          try {
+            return await prisma.feed.update({
+              where: { id: feed.id },
+              data: {
+                moderators: {
+                  disconnect: { id: Number(args.content) },
+                },
+              },
+              include: feedIncludeReturn,
+            });
+          } catch (e) {
+            throw new GraphQLError(e);
+          }
+        }
+
+
+        if (args.action === "ban") {
+          try {
+            if (bannedusers.includes(args.content)) {
+              throw new GraphQLError("User already banned");
+            }
+            return await prisma.feed.update({
+              where: { id: feed.id },
+              data: {
+                bannedusers: {
+                  connect: { id: Number(args.content) },
+                },
+              },
+              include: feedIncludeReturn,
+            });
+          } catch (e) {
+            throw new GraphQLError(e);
+          }
+        }
+
+
+        if (args.action === "unban") {
+          try {
+            return await prisma.feed.update({
+              where: { id: feed.id },
+              data: {
+                bannedusers: {
+                  disconnect: { id: Number(args.content) },
+                },
+              },
+              include: feedIncludeReturn,
+            });
+          } catch (e) {
+            throw new GraphQLError(e);
+          }
+        }
+
+
+        if (args.action === "editdesc") {
+          try {
+            console.log(feed)
+            const cleandesc = sanitizeHtml(args.content);
+            return await prisma.feed.update({
+              where: { id: feed.id },
+              data: { description: cleandesc },
+              include: feedIncludeReturn,
+            });
+          } catch (e) {
+            throw new GraphQLError(e);
+          }
+        }
+
+
+        if (args.action === "lockpost") {
+          try {
+            const post = await prisma.post.findUnique({
+              where: { id: Number(args.content) },
+              include: { feed: { select: { id: true } } },
+            });
+
+            if (post && post.feed.id === feed.id) {
+              return await prisma.post.update({
+                where: { id: post.id },
+                data: { locked: true },
+              });
+            }
+          } catch (e) {
+            throw new GraphQLError(e);
+          }
+        }
+
+
+        if (args.action === "unlockpost") {
+          try {
+            const post = await prisma.post.findUnique({
+              where: { id: Number(args.content) },
+              include: { feed: { select: { id: true } } },
+            });
+
+            if (post && post.feed.id === feed.id) {
+              return await prisma.post.update({
+                where: { id: post.id },
+                data: { locked: false },
+              });
+            }
+          } catch (e) {
+            throw new GraphQLError(e);
+          }
+        }
+
+
+        if (args.action === "deletepost") {
+          try {
+            const post = await prisma.post.findUnique({
+              where: { id: Number(args.content) },
+              include: { feed: { select: { id: true } } },
+            });
+
+            if (post && post.feed.id === feed.id) {
+              return await prisma.post.update({
+                where: { id: post.id },
+                data: {
+                  headline: "Post has been deleted by moderation!",
+                  description: "<u>This post has been deleted by <b>Mods</b></u>",
+                  img: null,
+                  active: false,
+                },
+              });
+            }
+          } catch (e) {
+            throw new GraphQLError(e);
+          }
+        }
+
+
+        if (args.action === "changeavatar") {
+          try {
+            return await prisma.feed.update({
+              where: { id: feed.id },
+              data: { feedavatar: args.content },
+              include: {
+                bannedusers: { select: { id: true, username: true } },
+                moderators: { select: { id: true, username: true, avatar: true } },
+                owner: { select: { id: true, username: true, avatar: true } },
+              },
+            });
+          } catch (e) {
+            throw new GraphQLError(e);
+          }
+        }
+
+        if (args.action === "makeowner") {
+          try {
+              const updatedFeed = await prisma.feed.update({
+                where: { id: feed.id },
+                data: {
+                  owner: { connect: { id: Number(args.content) } },
+                },
+                include: {
+                  bannedusers: { select: { id: true, username: true } },
+                  moderators: { select: { id: true, username: true, avatar: true } },
+                  owner: { select: { id: true, username: true, avatar: true } },
+                },
+              });
+
+              await prisma.user.update({
+                where: { id: Number(args.content) },
+                data: { ownedfeeds: { connect: { id: feed.id } } },
+              });
+
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { ownedfeeds: { disconnect: { id: feed.id } } },
+              });
+
+              return updatedFeed;
+            
+          } catch (e) {
+            throw new GraphQLError(e);
+          }
+        }
       }
     },
     likeComment: async (root: any, args: { id: any; }, context: { currentUser: any; }) => {
@@ -461,28 +821,28 @@ const resolvers = {
       console.log(user);
       const comment = await prisma.comment.findFirst({
         where: { id: args.id },
-        include: { owner: true, replies: true, replyto: true },
+        include: { user: true, replies: true, replyto: true },
       });
-      if (comment.owner.id == user.id) {
+      if (comment.user.id == user.id) {
         throw new GraphQLError("Cant give karma to yourself.");
       }
-      const likecommentids = user.likedcomments.map((comment: { id: any; }) => comment.id);
-      const dislikecommentids = user.dislikedcomments.map(
+      const likecommentids = user.likedComments.map((comment: { id: any; }) => comment.id);
+      const dislikecommentids = user.dislikedComments.map(
         (comment: { id: any; }) => comment.id
       );
       if (likecommentids.includes(comment.id)) {
         const newcomment = await prisma.comment.update({
           where: { id: comment.id },
           data: { karma: { decrement: 1 } },
-          include: { owner: true, replies: true, replyto: true },
+          include: { user: true, replies: true, replyto: true },
         });
         const commentOwner = await prisma.user.update({
-          where: { id: comment.owner.id },
+          where: { id: comment.user.id },
           data: { userKarma: { decrement: 1 } },
         });
         const newuser = await prisma.user.update({
           where: { id: user.id },
-          data: { likedcomments: { disconnect: { id: comment.id } } },
+          data: { likedComments: { disconnect: { id: comment.id } } },
         });
         return newcomment;
       } else {
@@ -493,28 +853,28 @@ const resolvers = {
           });
 
           const commentOwner = await prisma.user.update({
-            where: { id: comment.owner.id },
+            where: { id: comment.user.id },
             data: { userKarma: { increment: 1 } },
           });
 
           const newuser = await prisma.user.update({
             where: { id: user.id },
-            data: { dislikedcomments: { disconnect: { id: comment.id } } },
+            data: { dislikedComments: { disconnect: { id: comment.id } } },
           });
         }
         const newcommentret = await prisma.comment.update({
           where: { id: comment.id },
           data: { karma: { increment: 1 } },
-          include: { owner: true, replies: true, replyto: true },
+          include: { user: true, replies: true, replyto: true },
         });
 
         const commentOwner = await prisma.user.update({
-          where: { id: comment.owner.id },
+          where: { id: comment.user.id },
           data: { userKarma: { increment: 1 } },
         });
         const newuser = await prisma.user.update({
           where: { id: user.id },
-          data: { likedcomments: { connect: { id: comment.id } } },
+          data: { likedComments: { connect: { id: comment.id } } },
         });
 
         return newcommentret;
@@ -524,28 +884,28 @@ const resolvers = {
       const user = context.currentUser;
       const comment = await prisma.comment.findFirst({
         where: { id: args.id },
-        include: { owner: true, replies: true, replyto: true },
+        include: { user: true, replies: true, replyto: true },
       });
-      if (comment.owner.id == user.id) {
+      if (comment.user.id == user.id) {
         throw new GraphQLError("Cant give karma to yourself.");
       }
-      const dislikecommentids = user.dislikedcomments.map(
+      const dislikecommentids = user.dislikedComments.map(
         (comment: { id: any; }) => comment.id
       );
-      const likecommentids = user.likedcomments.map((comment: { id: any; }) => comment.id);
+      const likecommentids = user.likedComments.map((comment: { id: any; }) => comment.id);
       if (dislikecommentids.includes(comment.id)) {
         const newcomment = await prisma.comment.update({
           where: { id: comment.id },
           data: { karma: { increment: 1 } },
-          include: { owner: true, replies: true, replyto: true },
+          include: { user: true, replies: true, replyto: true },
         });
         const commentOwner = await prisma.user.update({
-          where: { id: comment.owner.id },
+          where: { id: comment.user.id },
           data: { userKarma: { increment: 1 } },
         });
         const newuser = await prisma.user.update({
           where: { id: user.id },
-          data: { dislikedcomments: { disconnect: { id: comment.id } } },
+          data: { dislikedComments: { disconnect: { id: comment.id } } },
         });
 
         return newcomment;
@@ -556,26 +916,26 @@ const resolvers = {
             data: { karma: { decrement: 1 } },
           });
           const commentOwner = await prisma.user.update({
-            where: { id: comment.owner.id },
+            where: { id: comment.user.id },
             data: { userKarma: { decrement: 1 } },
           });
           const newuser = await prisma.user.update({
             where: { id: user.id },
-            data: { likedcomments: { disconnect: { id: comment.id } } },
+            data: { likedComments: { disconnect: { id: comment.id } } },
           });
         }
         const newcommentret = await prisma.comment.update({
           where: { id: comment.id },
           data: { karma: { decrement: 1 } },
-          include: { owner: true, replies: true, replyto: true },
+          include: { user: true, replies: true, replyto: true },
         });
         const commentOwner = await prisma.user.update({
-          where: { id: comment.owner.id },
+          where: { id: comment.user.id },
           data: { userKarma: { decrement: 1 } },
         });
         const newuser = await prisma.user.update({
           where: { id: user.id },
-          data: { dislikedcomments: { connect: { id: comment.id } } },
+          data: { dislikedComments: { connect: { id: comment.id } } },
         });
 
         return newcommentret;
@@ -590,8 +950,8 @@ const resolvers = {
       if (post.owner.id == user.id) {
         throw new GraphQLError("Cant give karma to yourself.");
       }
-      const likeids = user.likedposts.map((post: { id: any; }) => post.id);
-      const dislikedids = user.dislikedposts.map((post: { id: any; }) => post.id);
+      const likeids = user.likedPosts.map((post: { id: any; }) => post.id);
+      const dislikedids = user.dislikedPosts.map((post: { id: any; }) => post.id);
       if (likeids.includes(post.id)) {
         const newpost = await prisma.post.update({
           where: { id: args.id },
@@ -603,11 +963,11 @@ const resolvers = {
         });
         const newuser = await prisma.user.update({
           where: { id: user.id },
-          data: { likedposts: { disconnect: { id: post.id } } },
+          data: { likedPosts: { disconnect: { id: post.id } } },
         });
         return newpost;
       } else {
-        if (dislikedids.includes(post.id.toString())) {
+        if (dislikedids.includes(post.id)) {
           const newpost = await prisma.post.update({
             where: { id: args.id },
             data: { karma: { increment: 1 } },
@@ -618,7 +978,7 @@ const resolvers = {
           });
           const newuser = await prisma.user.update({
             where: { id: user.id },
-            data: { dislikedposts: { disconnect: { id: post.id } } },
+            data: { dislikedPosts: { disconnect: { id: post.id } } },
           });
         }
         const newpost = await prisma.post.update({
@@ -631,7 +991,7 @@ const resolvers = {
         });
         const newuser = await prisma.user.update({
           where: { id: user.id },
-          data: { likedposts: { connect: { id: post.id } } },
+          data: { likedPosts: { connect: { id: post.id } } },
         });
         return newpost;
       }
@@ -645,9 +1005,9 @@ const resolvers = {
       if (post.owner.id == user.id) {
         throw new GraphQLError("Cant give karma to yourself.");
       }
-      const dislikeids = user.dislikedposts.map((post: { id: any; }) => post.id);
-      const likeids = user.likedposts.map((post: { id: any; }) => post.id);
-      if (dislikeids.includes(post.id.toString())) {
+      const dislikeids = user.dislikedPosts.map((post: { id: any; }) => post.id);
+      const likeids = user.likedPosts.map((post: { id: any; }) => post.id);
+      if (dislikeids.includes(post.id)) {
         const newpost = await prisma.post.update({
           where: { id: args.id },
           data: { karma: { increment: 1 } },
@@ -658,7 +1018,7 @@ const resolvers = {
         });
         const newuser = await prisma.user.update({
           where: { id: user.id },
-          data: { dislikedposts: { disconnect: { id: post.id } } },
+          data: { dislikedPosts: { disconnect: { id: post.id } } },
         });
 
         return newpost;
@@ -674,7 +1034,7 @@ const resolvers = {
           });
           const newuser = await prisma.user.update({
             where: { id: user.id },
-            data: { likedposts: { disconnect: { id: post.id } } },
+            data: { likedPosts: { disconnect: { id: post.id } } },
           });
         }
         const newpost = await prisma.post.update({
@@ -687,7 +1047,7 @@ const resolvers = {
         });
         const newuser = await prisma.user.update({
           where: { id: user.id },
-          data: { dislikedposts: { connect: { id: post.id } } },
+          data: { dislikedPosts: { connect: { id: post.id } } },
         });
         return newpost;
       }

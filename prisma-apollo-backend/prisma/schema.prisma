@@ -48,7 +48,7 @@ model Post {
   id            Int       @id @default(autoincrement())
   headline      String?
   description   String?
-  karma         Int?
+  karma         Int       @default(0)
   commentsCount Int       @default(0)
   img           String?
   locked        Boolean   @default(false)

@@ -42,7 +42,7 @@ const FeedModSettings = ({
       return <Typography>{imagepath[1]}</Typography>;
     }
   };
-
+  
   const OwnerSettings = () => {
     const ChatroomOptions = () => {
       if (item.chatRoom) {
@@ -163,7 +163,7 @@ const FeedModSettings = ({
                   sx={{ borderRadius: 50 }}
                   onClick={() =>
                     editfeed({
-                      feedid: item.id,
+                      feedid: Number(item.id),
                       action: "changeavatar",
                       content: imagepath[0],
                     })
@@ -259,7 +259,7 @@ const FeedModSettings = ({
           sx={{ borderRadius: 50 }}
           onClick={() =>
             editfeed({
-              feedid: item.id,
+              feedid: Number(item.id),
               action: action,
               content: SelectedUser.id,
             })
@@ -280,6 +280,7 @@ const FeedModSettings = ({
   if (!mods || !User) {
     return;
   }
+  
   if (mods.includes(User.id)) {
     return (
       <Box>

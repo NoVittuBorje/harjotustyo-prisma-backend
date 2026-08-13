@@ -34,7 +34,8 @@ import PostModSettings from "./PostModSettings";
 import Locked from "../../utils/Locked";
 
 const SinglePost = ({ match, User, refetchUser, setmessage, setseverity }) => {
-  const id = match.params.id;
+  let id = match.params.id;
+  id = Number(id)
   const navigate = useNavigate();
   const [edit] = useEditPost();
   const { data, refetchPost } = useGetPost({ id });

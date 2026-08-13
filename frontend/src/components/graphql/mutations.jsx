@@ -16,17 +16,27 @@ export const REGISTER = gql`
   }
 `;
 export const MAKEFEED = gql`
-  mutation Mutation($feedname: String!, $description: String!) {
-    makeFeed(feedname: $feedname, description: $description) {
-      username
+mutation Mutation($feedname: String!, $description: String!) {
+  makeFeed(feedname: $feedname, description: $description) {
+    feedname
+    description
+    feedavatar
+    subsCount
+    active
+    createdAt
+    updatedAt
+    id
+    owner {
       avatar
-      ownedfeeds {
-        feedname
-        id
-      }
       id
+      username
+      ownedFeeds {
+        id
+        feedname
+      }
     }
   }
+}
 `;
 
 export const MAKEPOST = gql`
@@ -90,7 +100,7 @@ export const SUBSCRIBE = gql`
   }
 `;
 export const MAKECOMMENT = gql`
-  mutation Mutation($content: String!, $replyto: String, $postid: String!) {
+  mutation Mutation($content: String!, $replyto: Int, $postid: Int!) {
     makeComment(content: $content, replyto: $replyto, postid: $postid) {
       content
       id
@@ -102,14 +112,14 @@ export const MAKECOMMENT = gql`
       }
       replies {
         content
-        owner {
+        user {
           avatar
           id
           username
         }
         id
       }
-      owner {
+      user {
         avatar
         username
         id
@@ -119,7 +129,7 @@ export const MAKECOMMENT = gql`
 `;
 export const EDITCOMMENT = gql`
   mutation ModifyComment(
-    $commentid: String!
+    $commentid: Int!
     $content: String!
     $action: String!
   ) {
@@ -133,7 +143,7 @@ export const EDITCOMMENT = gql`
   }
 `;
 export const EDITFEED = gql`
-  mutation ModifyFeed($feedid: String!, $action: String!, $content: String!) {
+  mutation ModifyFeed($feedid: Int!, $action: String!, $content: String!) {
     modifyFeed(feedid: $feedid, action: $action, content: $content) {
       ... on Feed {
         feedname
@@ -174,7 +184,7 @@ export const EDITFEED = gql`
   }
 `;
 export const EDITPOST = gql`
-  mutation ModifyPost($postid: String!, $action: String!, $content: String!) {
+  mutation ModifyPost($postid: Int!, $action: String!, $content: String!) {
     modifyPost(postid: $postid, action: $action, content: $content) {
       headline
       description
@@ -211,7 +221,7 @@ export const USEREDIT = gql`
   }
 `;
 export const LIKECOMMENT = gql`
-  mutation LikeComment($likeCommentId: String!) {
+  mutation LikeComment($likeCommentId: Int!) {
     likeComment(id: $likeCommentId) {
       content
       active
@@ -230,7 +240,7 @@ export const LIKECOMMENT = gql`
   }
 `;
 export const DISLIKECOMMENT = gql`
-  mutation DislikeComment($dislikeCommentId: String!) {
+  mutation DislikeComment($dislikeCommentId: Int!) {
     dislikeComment(id: $dislikeCommentId) {
       content
       active
@@ -249,7 +259,7 @@ export const DISLIKECOMMENT = gql`
   }
 `;
 export const LIKEPOST = gql`
-  mutation LikePost($likePostId: String!) {
+  mutation LikePost($likePostId: Int!) {
     likePost(id: $likePostId) {
       headline
       description
@@ -263,7 +273,7 @@ export const LIKEPOST = gql`
   }
 `;
 export const DISLIKEPOST = gql`
-  mutation DislikePost($dislikePostId: String!) {
+  mutation DislikePost($dislikePostId: Int!) {
     dislikePost(id: $dislikePostId) {
       headline
       description
@@ -277,7 +287,7 @@ export const DISLIKEPOST = gql`
   }
 `;
 export const SENDCHATMESSAGE = gql`
-  mutation Message($content: String!, $roomId: String!) {
+  mutation Message($content: String!, $roomId: Int!) {
     message(content: $content, roomId: $roomId) {
       id
       content
@@ -290,7 +300,7 @@ export const SENDCHATMESSAGE = gql`
   }
 `;
 export const MAKENEWCHATROOM = gql`
-  mutation CreateRoom($name: String!, $type: String!, $feedId: String) {
+  mutation CreateRoom($name: String!, $type: String!, $feedId: Int) {
     createRoom(name: $name, type: $type, feedId: $feedId) {
       ... on Feed {
         feedname
@@ -348,8 +358,8 @@ export const MAKENEWCHATROOM = gql`
 export const EDITCHATROOM = gql`
   mutation EditRoom(
     $type: String!
-    $roomId: String
-    $feedId: String
+    $roomId: Int
+    $feedId: Int
     $content: String
   ) {
     editRoom(type: $type, roomId: $roomId, feedId: $feedId, content: $content) {
@@ -407,7 +417,7 @@ export const EDITCHATROOM = gql`
   }
 `;
 export const FRIENDSREQUESTACTIONS = gql`
-  mutation FriendRequestAction($userId: String!, $type: String!) {
+  mutation FriendRequestAction($userId: Int!, $type: String!) {
     friendRequestAction(userId: $userId, type: $type) {
       username
       avatar
@@ -426,7 +436,7 @@ export const FRIENDSREQUESTACTIONS = gql`
   }
 `;
 export const INVITETOCHATROOM = gql`
-  mutation InviteToRoom($roomId: String!, $invitedId: String!) {
+  mutation InviteToRoom($roomId: Int!, $invitedId: Int!) {
     inviteToRoom(roomId: $roomId, invitedId: $invitedId) {
       id
       name
@@ -434,7 +444,7 @@ export const INVITETOCHATROOM = gql`
   }
 `;
 export const CHATROOMINVITEACTIONS = gql`
-  mutation RoomInviteAction($type: String!, $roomId: String!) {
+  mutation RoomInviteAction($type: String!, $roomId: Int!) {
     roomInviteAction(type: $type, roomId: $roomId) {
       username
       avatar
@@ -451,7 +461,7 @@ export const CHATROOMINVITEACTIONS = gql`
   }
 `;
 export const SENDFRIENDREQUEST = gql`
-  mutation SendFriendRequest($userId: String!) {
+  mutation SendFriendRequest($userId: Int!) {
     sendFriendRequest(userId: $userId) {
       username
       avatar

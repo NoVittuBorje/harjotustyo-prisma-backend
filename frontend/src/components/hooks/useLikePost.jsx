@@ -6,6 +6,7 @@ import { GET_ME } from "../graphql/queries";
 const useLikePost = () => {
   const [mutate, result] = useMutation(LIKEPOST);
   const edit = async ({id}) => {
+    id = Number(id)
     const data = await mutate({
         variables:{
             likePostId:id

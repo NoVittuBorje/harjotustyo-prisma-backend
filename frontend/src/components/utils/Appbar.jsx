@@ -347,7 +347,7 @@ export default function PrimarySearchAppBar({
           </ListItemButton>
         </ListItem>
         <Collapse in={open}>
-          {feeds.map((feed) => (
+          {feeds.feed ? feeds.map((feed) => (
             <ListItem
               onClick={toggleDrawer(false)}
               key={feed.feedname}
@@ -362,7 +362,7 @@ export default function PrimarySearchAppBar({
                 <ListItemText primary={feed.feedname} />
               </ListItemButton>
             </ListItem>
-          ))}
+          )): []}
         </Collapse>
       </>
     );
@@ -424,8 +424,8 @@ export default function PrimarySearchAppBar({
           </ListItemButton>
         </ListItem>
         <Collapse in={open}>
-          {User.ownedfeeds ? (
-            User.ownedfeeds.map((feed) => (
+          {User.ownedFeeds ? (
+            User.ownedFeeds.map((feed) => (
               <ListItem
                 onClick={toggleDrawer(false)}
                 key={feed.feedname}
@@ -736,7 +736,6 @@ export default function PrimarySearchAppBar({
     
     const FriendRequests = ({ User }) => {
       const friendRequests = User.User_UserFriendRequests_A.concat(User.User_UserFriendRequests_B)
-      console.log(friendRequests)
       if (friendRequests.length > 0) {
         return (
           <>

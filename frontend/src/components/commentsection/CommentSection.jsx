@@ -51,7 +51,7 @@ const CommentSection = ({
   const Commentitem = ({ comment, index }) => {
     const [showComment, setShowComment] = useState(true);
     return (
-      <Collapse key={index} mountOnEnter in={showComment}>
+      <Collapse key={`${index}Collapseitem`} mountOnEnter in={showComment}>
         <Comment
           User={User}
           handleDelete={handleDelete}

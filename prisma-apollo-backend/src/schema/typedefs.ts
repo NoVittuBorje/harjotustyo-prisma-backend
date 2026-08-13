@@ -10,14 +10,14 @@ const typeDefs =`#graphql
     posts:[Post]
     bannedusers:[User]
     active:Boolean
-    feedchat:Room
+    chatRoom:Room
     createdAt:String
     updatedAt:String
     id:ID!
   }
   type Comment {
     post:Post
-    owner:User
+    user:User
     content:String
     replies:[Comment]
     replyto:Comment
@@ -128,6 +128,7 @@ const typeDefs =`#graphql
     feedname:String
     querytype:String!
     ):[Feed]
+
     getfeedposts(
     feedname:String!
     orderBy:String!
@@ -135,7 +136,7 @@ const typeDefs =`#graphql
     ):[Post]
 
     getpostcomments(
-    postid:String!
+    postid:Int!
     offset:Int!
     ):[Comment]
 
@@ -144,34 +145,35 @@ const typeDefs =`#graphql
     orderBy:String
     ):[Post]
 
-    getpost(postid:String!):Post
+    getpost(postid:Int!):Post
+
     getcomments(
-    commentid:String!
+    commentid:Int!
     offset:Int!
     ):[Comment]
 
     getuserposts(
-    userid:String!
+    userid:Int!
     offset:Int!
     ):[Post]
 
     getusercomments(
-    userid:String!
+    userid:Int!
     offset:Int!
     ):[Comment]
 
     getusersubs(
-    userid:String!
+    userid:Int!
     offset:Int!
     ):[Feed]
 
     getuserownedfeeds(
-    userid:String!
+    userid:Int!
     offset:Int!
     ):[Feed]
 
     getuserinfo(
-    userid:String!
+    userid:Int!
     offset:Int!
     type:String!
     ):User
@@ -190,17 +192,17 @@ const typeDefs =`#graphql
     getSubsCount(
     feedname:String!):Int!
 
-    getFiles(userId: String!): [String!]
+    getFiles(userId: Int!): [String!]
     
     getImage(imageId:String!):String!
 
     getUserRooms:User
 
-    getMessages(roomId: String!,offset:Int): [Message!]
+    getMessages(roomId: Int!,offset:Int): [Message!]
 
-    getMessagesForRoom(roomId:String!): Room!
+    getMessagesForRoom(roomId:Int!): Room!
 
-    getChatRoomInfo(roomId:String!): Room!
+    getChatRoomInfo(roomId:Int!): Room!
   }
   
   type Mutation {
@@ -228,22 +230,22 @@ const typeDefs =`#graphql
       img: String
     ): Post
     makeComment(
-      postid: String!
+      postid: Int!
       content: String!
-      replyto: String
+      replyto: Int
     ):Comment
     modifyComment(
-      commentid:String!
+      commentid:Int!
       action:String!
       content: String!
     ):Comment
     modifyPost(
-    postid:String!
+    postid:Int!
     action:String!
     content: String!
     ):Post
     modifyFeed(
-    feedid:String!
+    feedid:Int!
     action:String!
     content:String!
     ):Search
@@ -253,19 +255,19 @@ const typeDefs =`#graphql
     ): User
 
     dislikePost(
-    id:String!
+    id:Int!
     ):Post
 
     likePost(
-    id:String!
+    id:Int!
     ):Post
 
     dislikeComment(
-    id:String!
+    id:Int!
     ):Comment
 
     likeComment(
-    id:String!
+    id:Int!
     ):Comment
     
     singleUpload(input: SingleFileInput!): [String!]
@@ -275,34 +277,34 @@ const typeDefs =`#graphql
     createRoom(
     name:String! 
     type:String!
-    feedId:String
+    feedId:Int
     ):NewRoomResult
 
 
 
     inviteToRoom(
-    roomId:String!,
-    invitedId:String!
+    roomId:Int!,
+    invitedId:Int!
     ):Room
 
     roomInviteAction(
     type:String!
-    roomId:String!
+    roomId:Int!
     ):User
 
 
     editRoom(
-    roomId:String,
-    feedId:String,
+    roomId:Int,
+    feedId:Int,
     content:String,
     type:String!
     ):NewRoomResult!
 
-    message(content: String!, roomId:String!): Message
+    message(content: String!, roomId:Int!): Message
 
-    sendFriendRequest(userId:String!):User
+    sendFriendRequest(userId:Int!):User
 
-    friendRequestAction(userId:String!, type:String!):User
+    friendRequestAction(userId:Int!, type:String!):User
   }
 `
 export default typeDefs

@@ -5,6 +5,7 @@ import { GET_ME } from "../graphql/queries";
 const useDislikeComment = () => {
   const [mutate, result] = useMutation(DISLIKECOMMENT);
   const edit = async ({ id }) => {
+    id = Number(id)
     const data = await mutate({
       variables: {
         dislikeCommentId: id,

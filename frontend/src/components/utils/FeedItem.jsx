@@ -21,7 +21,6 @@ import PostCommentItem from "./PostCommentItem";
 const FeedItem = ({ item, owner, User, mods, setmessage, setseverity }) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-
   const ModSettings = () => {
     if (!mods | !User) {
       return;

@@ -5,6 +5,7 @@ import { GET_ME } from "../graphql/queries";
 const useEditComment = () => {
   const [mutate, result] = useMutation(EDITCOMMENT);
   const edit = async ({ commentid, content, action }) => {
+    commentid = Number(commentid)
     const data = await mutate({
       variables: {
         commentid: commentid,

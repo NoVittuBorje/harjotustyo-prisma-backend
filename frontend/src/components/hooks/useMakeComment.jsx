@@ -6,6 +6,8 @@ const useMakeComment = () => {
   const [mutate, result] = useMutation(MAKECOMMENT);
   const comment = async ({ postid, replyto, content }) => {
     if (replyto) {
+      replyto = Number(replyto)
+      postid = Number(postid)
       const data = await mutate({
         variables: { postid: postid, replyto: replyto, content: content },
       });

@@ -6,7 +6,7 @@ const useEditFeed = () => {
   const edit = async ({ feedid, content, action }) => {
     const data = await mutate({
       variables: {
-        feedid: feedid,
+        feedid: Number(feedid),
         content: content,
         action: action,
       },

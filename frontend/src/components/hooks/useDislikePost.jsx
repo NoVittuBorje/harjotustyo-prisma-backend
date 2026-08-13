@@ -5,6 +5,7 @@ import { GET_ME } from "../graphql/queries";
 const useDislikePost = () => {
   const [mutate, result] = useMutation(DISLIKEPOST);
   const edit = async ({ id }) => {
+    id = Number(id)
     const data = await mutate({
       variables: {
         dislikePostId: id,

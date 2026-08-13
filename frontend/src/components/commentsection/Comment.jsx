@@ -81,8 +81,9 @@ const Comment = ({
         <Grid
           sx={{ display: "flex", flexDirection: "row", justifyItems: "center" }}
           container
+          key={`${comment.id}CommentItemBox2`}
         >
-          <Grid>
+          <Grid key={`${comment.id}CommentItemMoreCommentsIcon`}>
             <IconButton
               size="small"
               onClick={() => {
@@ -92,7 +93,7 @@ const Comment = ({
               <AddCircleOutlineIcon></AddCircleOutlineIcon>
             </IconButton>
           </Grid>
-          <Grid alignItems="center" sx={{ display: "flex" }}>
+          <Grid key={`${comment.id}CommentItemBoxCommentsText`} alignItems="center" sx={{ display: "flex" }}>
             <Box>
               <Button
                 size="small"
@@ -141,6 +142,7 @@ const Comment = ({
             padding: 0.5,
             minWidth: "98%",
           }}
+          key={`${comment.id}CommentItemBox`}
         >
           <Grid flexDirection={"row"} container>
             <Grid>
@@ -158,7 +160,7 @@ const Comment = ({
               <Useritem
                 time={comment.createdAt}
                 edittime={comment.updatedAt}
-                user={comment.owner}
+                user={comment.user}
               ></Useritem>
             </Grid>
           </Grid>
@@ -195,7 +197,7 @@ const Comment = ({
                 <Useritem
                   time={comment.createdAt}
                   edittime={comment.updatedAt}
-                  user={comment.owner}
+                  user={comment.user}
                 ></Useritem>
 
                 <Box
@@ -289,7 +291,7 @@ const Comment = ({
         </>
       );
     } else {
-      if (User.id == comment.owner.id) {
+      if (User.id == comment.user.id) {
         return (
           <Box>
             <Button

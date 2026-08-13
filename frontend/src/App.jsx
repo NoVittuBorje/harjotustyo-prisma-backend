@@ -48,8 +48,6 @@ function App() {
   if (!token) {
     User = null;
   }
-  console.log(User)
-
   return (
     <Box>
       <AppBar

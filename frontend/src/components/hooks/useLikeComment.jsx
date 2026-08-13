@@ -6,6 +6,7 @@ import { GET_ME } from "../graphql/queries";
 const useLikeComment = () => {
   const [mutate, result] = useMutation(LIKECOMMENT);
   const edit = async ({ id }) => {
+    id = Number(id)
     const data = await mutate({
       variables: {
         likeCommentId: id,

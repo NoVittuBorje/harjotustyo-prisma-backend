@@ -136,7 +136,7 @@ export const GET_FEED_POSTS = gql`
   }
 `;
 export const GET_POST_COMMENTS = gql`
-  query Getpostcomments($postid: String!, $offset: Int!) {
+  query Getpostcomments($postid: Int!, $offset: Int!) {
     getpostcomments(postid: $postid, offset: $offset) {
       content
       active
@@ -148,7 +148,7 @@ export const GET_POST_COMMENTS = gql`
       replies {
         id
       }
-      owner {
+      user {
         username
         avatar
         id
@@ -157,7 +157,7 @@ export const GET_POST_COMMENTS = gql`
   }
 `;
 export const GET_POST = gql`
-  query Getpost($postid: String!) {
+  query Getpost($postid: Int!) {
     getpost(postid: $postid) {
       headline
       description
@@ -189,7 +189,7 @@ export const GET_POST = gql`
 `;
 
 export const GET_USER = gql`
-  query Getuser($getuserId: String!) {
+  query Getuser($getuserId: Int!) {
     getuser(id: $getuserId) {
       username
       email
@@ -203,25 +203,25 @@ export const GET_USER = gql`
       work
       active
       id
-      dislikedposts {
+      dislikedPosts {
         id
       }
-      likedposts {
+      likedPosts {
         id
       }
-      likedcomments {
+      likedComments {
         id
       }
-      dislikedcomments {
+      dislikedComments {
         id
       }
-      feedsubs {
+      feedSubs {
         id
       }
       posts {
         id
       }
-      ownedfeeds {
+      ownedDeeds {
         id
       }
       comments {
@@ -242,10 +242,10 @@ export const GET_ALL_FEED = gql`
 `;
 
 export const GET_COMMENTS = gql`
-  query Getcomments($commentid: String!, $offset: Int!) {
+  query Getcomments($commentid: Int!, $offset: Int!) {
     getcomments(commentid: $commentid, offset: $offset) {
       content
-      owner {
+      user {
         username
         avatar
         id
@@ -264,7 +264,7 @@ export const GET_COMMENTS = gql`
         id
         createdAt
         updatedAt
-        owner {
+        user {
           username
           avatar
           id
@@ -302,7 +302,7 @@ export const GET_POPULAR_POSTS = gql`
   }
 `;
 export const GET_USER_COMMENTS = gql`
-  query Getusercomments($userid: String!, $offset: Int!) {
+  query Getusercomments($userid: Int!, $offset: Int!) {
     getusercomments(userid: $userid, offset: $offset) {
       content
       active
@@ -313,7 +313,7 @@ export const GET_USER_COMMENTS = gql`
       id
       replyto {
         id
-        owner {
+        user {
           id
           username
           avatar
@@ -337,7 +337,7 @@ export const GET_USER_COMMENTS = gql`
   }
 `;
 export const GET_USER_POSTS = gql`
-  query Getuserposts($userid: String!, $offset: Int!) {
+  query Getuserposts($userid: Int!, $offset: Int!) {
     getuserposts(userid: $userid, offset: $offset) {
       headline
       description
@@ -360,7 +360,7 @@ export const GET_USER_POSTS = gql`
   }
 `;
 export const GET_USER_SUBS = gql`
-  query Getusersubs($userid: String!, $offset: Int!) {
+  query Getusersubs($userid: Int!, $offset: Int!) {
     getusersubs(userid: $userid, offset: $offset) {
       feedname
       description
@@ -372,7 +372,7 @@ export const GET_USER_SUBS = gql`
   }
 `;
 export const GET_USER_OWNEDFEEDS = gql`
-  query Getuserownedfeeds($userid: String!, $offset: Int!) {
+  query Getuserownedfeeds($userid: Int!, $offset: Int!) {
     getuserownedfeeds(userid: $userid, offset: $offset) {
       feedname
       description
@@ -432,7 +432,7 @@ export const GET_FEED_SUBS_COUNT = gql`
   }
 `;
 export const GET_CHAT_MESSAGES = gql`
-  query GetMessages($roomId: String!, $offset: Int) {
+  query GetMessages($roomId: Int!, $offset: Int) {
     getMessages(roomId: $roomId, offset: $offset) {
       id
       content
@@ -446,7 +446,7 @@ export const GET_CHAT_MESSAGES = gql`
   }
 `;
 export const GET_CHAT_MESSAGES_FOR_ROOM = gql`
-  query GetMessagesForRoom($roomId: String!) {
+  query GetMessagesForRoom($roomId: Int!) {
     getMessagesForRoom(roomId: $roomId) {
       id
       name
@@ -465,7 +465,7 @@ export const GET_CHAT_MESSAGES_FOR_ROOM = gql`
   }
 `;
 export const GET_CHAT_ROOM_INFO = gql`
-  query Query($roomId: String!) {
+  query Query($roomId: Int!) {
     getChatRoomInfo(roomId: $roomId) {
       id
       name

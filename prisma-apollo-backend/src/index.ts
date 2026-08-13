@@ -81,7 +81,6 @@ const start = async () => {
       let currentUser = null; 
       
       const auth = req ? req.headers.authorization : null;
-      console.log(auth)
       if (auth && auth.startsWith("Bearer ")) {
         try {
           const decodedToken = <any>(
@@ -111,7 +110,6 @@ const start = async () => {
               User_UserFriends_B: true
             },
           });
-          console.log(currentUser)
         } catch (error) {
           console.error("JWT verification failed:", error);
         }

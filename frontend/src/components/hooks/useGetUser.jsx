@@ -1,9 +1,10 @@
 import { useQuery } from "@apollo/client";
 import { GET_USER } from "../graphql/queries";
 const useGetUser = ({ id }) => {
+
   const { data, error, loading, refetch } = useQuery(
     GET_USER,
-    { variables: { getuserId: id } },
+    { variables: { getuserId: Number(id) } },
     {
       fetchPolicy: "network-only",
       nextFetchPolicy: "cache-first",

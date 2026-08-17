@@ -46,6 +46,7 @@ const resolvers = {
     },
     me: async (root: any, args: any, context: { prisma:any,currentUser: any; }) => {
       const user = context.currentUser;
+      console.log(user)
       return user;
     },
     getfeed: async (root: any, args: { feedname: any; }, context: any) => {
@@ -156,7 +157,7 @@ const resolvers = {
       console.log(comments);
       return comments;
     },
-    getpopularposts: async (root: any, args: { orderBy: string; offset: any; }, context: { currentUser: { feedsubs: any[]; ownedfeeds: any[]; }; }) => {
+    getpopularposts: async (root: any, args: { orderBy: string; offset: any; }, context: { currentUser: { feedSubs: any[]; ownedFeeds: any[]; }; }) => {
       console.log(args.orderBy);
       if (args.orderBy === "HOTTEST") {
         try {
@@ -202,8 +203,8 @@ const resolvers = {
       }
       if (args.orderBy === "SUBSCRIPTIONS") {
         try {
-          console.log(context.currentUser.feedsubs);
-          const subs = context.currentUser.feedsubs.map((x) => x.id);
+          console.log(context.currentUser.feedSubs);
+          const subs = context.currentUser.feedSubs.map((x) => x.id);
           const posts = await prisma.post.findMany({
             where: {
               feed: { id: { in: [...subs] } },
@@ -220,8 +221,8 @@ const resolvers = {
       }
       if (args.orderBy === "OWNEDFEEDS") {
         try {
-          console.log(context.currentUser.ownedfeeds);
-          const feeds = context.currentUser.ownedfeeds.map((x) => x.id);
+          console.log(context.currentUser.ownedFeeds);
+          const feeds = context.currentUser.ownedFeeds.map((x) => x.id);
           const posts = await prisma.post.findMany({
             where: {
               feed: { id: { in: [...feeds] } },
@@ -551,7 +552,7 @@ const resolvers = {
         }
       }
 
-      // Kaverin poistaminen (Mongoose $pull -> Prisma disconnect)
+
       if (args.type === "removefriend") {
         return await prisma.user.update({
           where: { id: user.id },
@@ -800,12 +801,12 @@ const resolvers = {
 
               await prisma.user.update({
                 where: { id: Number(args.content) },
-                data: { ownedfeeds: { connect: { id: feed.id } } },
+                data: { ownedFeeds: { connect: { id: feed.id } } },
               });
 
               await prisma.user.update({
                 where: { id: user.id },
-                data: { ownedfeeds: { disconnect: { id: feed.id } } },
+                data: { ownedFeeds: { disconnect: { id: feed.id } } },
               });
 
               return updatedFeed;
@@ -1085,6 +1086,87 @@ const resolvers = {
       
       return { value: jwt.sign(userForToken, process.env.JWT_SECRET) };
     },
+    subscribe: async (root: any, args: { feedname: any; type: string; }, context: { currentUser: { id: any; }; }) => {
+  if (!context.currentUser) {
+    throw new GraphQLError("not logged in");
+  }
+  const feed = await prisma.feed.findUnique({
+    where: { feedname: args.feedname },
+  });
+
+  if (!feed) {
+    throw new GraphQLError("feed not found");
+  }
+
+  // Yhteiset include-asetukset käyttäjän palauttamista varten (korvaa .populate)
+  const userIncludeOptions = {
+    ownedFeeds: {
+      select: {
+        feedname: true,
+        id: true,
+      },
+    },
+    feedSubs: {
+      select: {
+        id: true,
+        feedname: true,
+      },
+    },
+  };
+
+  if (args.type === "sub") {
+    await prisma.feed.update({
+      where: { id: feed.id },
+      data: {
+        subs: {
+          connect: { id: context.currentUser.id },
+        },
+        subsCount: {
+          increment: 1,
+        },
+      },
+    });
+
+    const updatedUser = await prisma.user.update({
+      where: { id: context.currentUser.id },
+      data: {
+        feedSubs: {
+          connect: { id: feed.id },
+        },
+      },
+      include: userIncludeOptions,
+    });
+
+    return updatedUser;
+  }
+
+  if (args.type === "unsub") {
+    await prisma.feed.update({
+      where: { id: feed.id },
+      data: {
+        subs: {
+          disconnect: { id: context.currentUser.id },
+        },
+        subsCount: {
+          increment: -1,
+        },
+      },
+    });
+
+
+    const updatedUser = await prisma.user.update({
+      where: { id: context.currentUser.id },
+      data: {
+        feedSubs: {
+          disconnect: { id: feed.id },
+        },
+      },
+      include: userIncludeOptions,
+    });
+
+    return updatedUser;
+      }
+    },
     singleUpload: async (_: any, { input: { userId, file } }: any, context: { currentUser: any; }) => {
       if (!context.currentUser) {
         throw new GraphQLError("not logged in");
@@ -1163,12 +1245,6 @@ const resolvers = {
       const owner = context.currentUser;
       const room = await prisma.rooms.findFirst({ where: { id: args.roomId } });
 
-      const data = {
-        content: args.content,
-        owner: owner,
-        room: room,
-      };
-
       const message = await prisma.messages.create({
         data: {
           content: args.content,
@@ -1188,7 +1264,133 @@ const resolvers = {
       pubsub.publish(MESSAGE_SENT, { messageSent: message });
       return message;
     },
-    sendFriendRequest: async (root: any, args: { userId: any; }, context: { currentUser: { id: any; _id: any; }; }) => {
+    sendFriendRequest: async (root: any, args: { userId: any; }, context: { currentUser: { id: any; }; }) => {
+      if (!context.currentUser) {
+        throw new GraphQLError("No user logon.");
+      }
+      
+      const targetUserId = Number(args.userId);
+      const currentUserId = Number(context.currentUser.id);
+
+      if (targetUserId === currentUserId) {
+        throw new GraphQLError("Cant send friend request to yourself!");
+      }
+
+      await prisma.user.update({
+        where: { id: targetUserId },
+        data: {
+          User_UserFriendRequests_B: {
+            connect: { id: currentUserId },
+          },
+        },
+      });
+
+      const updatedUser = await prisma.user.update({
+        where: { id: currentUserId },
+        data: {
+          User_UserFriendRequestsSent_B: {
+            connect: { id: targetUserId },
+          },
+        },
+        include: {
+          User_UserFriendRequestsSent_B: {
+            select: { id: true,username:true,avatar:true },
+          },
+        },
+      });
+
+
+      return {
+        ...updatedUser,
+        friendsRequestsSent: updatedUser.User_UserFriendRequestsSent_B,
+      };
+    },
+
+    friendRequestAction: async (root: any, args: { userId: any; type: string; }, context: { currentUser: { id: any; }; }) => {
+      if (!context.currentUser) {
+        throw new GraphQLError("No user logon.");
+      }
+
+      const targetUserId = Number(args.userId);
+      const currentUserId = Number(context.currentUser.id);
+
+
+      const userPopulateSelect = {
+        select: {
+          id: true,
+          username: true,
+          avatar: true,
+        },
+      };
+
+      if (args.type === "accept") {
+
+        const updatedUser = await prisma.user.update({
+          where: { id: currentUserId },
+          data: {
+            User_UserFriends_B: {
+              connect: { id: targetUserId },
+            },
+            User_UserFriendRequests_B: {
+              disconnect: { id: targetUserId },
+            },
+          },
+          include: {
+            User_UserFriends_B: userPopulateSelect,
+            User_UserFriendRequests_B: userPopulateSelect,
+          },
+        });
+
+
+        await prisma.user.update({
+          where: { id: targetUserId },
+          data: {
+            User_UserFriends_B: {
+              connect: { id: currentUserId },
+            },
+            User_UserFriendRequestsSent_B: {
+              disconnect: { id: currentUserId },
+            },
+          },
+        });
+
+
+        return {
+          ...updatedUser,
+          friends: updatedUser.User_UserFriends_B,
+          friendsRequests: updatedUser.User_UserFriendRequests_B,
+        };
+      }
+
+      if (args.type === "decline") {
+        const updatedUser = await prisma.user.update({
+          where: { id: currentUserId },
+          data: {
+            User_UserFriendRequests_B: {
+              disconnect: { id: targetUserId },
+            },
+          },
+          include: {
+            User_UserFriends_B: userPopulateSelect,
+            User_UserFriendRequests_B: userPopulateSelect,
+          },
+        });
+
+        await prisma.user.update({
+          where: { id: targetUserId },
+          data: {
+            User_UserFriendRequestsSent_B: {
+              disconnect: { id: currentUserId },
+            },
+          },
+        });
+
+        return {
+          ...updatedUser,
+          friends: updatedUser.User_UserFriends_B,
+          friendsRequests: updatedUser.User_UserFriendRequests_B,
+        };
+      }
     },
   },
   Subscription: {

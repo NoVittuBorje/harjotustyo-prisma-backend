@@ -5,7 +5,7 @@ const FileUpload = ({ userid, setImagePath,type }) => {
   const [mutate] = useUploadImage();
   const onDrop = useCallback(
     (acceptedFiles) => {
-      // do something here
+
 
       const variables = {
         userId: userid,

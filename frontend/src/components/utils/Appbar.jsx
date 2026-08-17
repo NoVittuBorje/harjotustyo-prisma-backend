@@ -232,7 +232,7 @@ export default function PrimarySearchAppBar({
           getOptionLabel={(option) => `${option.username}`}
           getOptionKey={(option) => option.username}
           renderOption={(params, option) => (
-            <Typography {...params}>{option.username}</Typography>
+            <Typography {...params} key={params.key} >{option.username}</Typography>
           )}
           renderInput={(params) => (
             <TextField
@@ -383,8 +383,8 @@ export default function PrimarySearchAppBar({
           </ListItemButton>
         </ListItem>
         <Collapse in={open}>
-          {User.feedsubs ? (
-            User.feedsubs.map((subs) => (
+          {User.feedSubs ? (
+            User.feedSubs.map((subs) => (
               <ListItem
                 onClick={toggleDrawer(false)}
                 key={subs.feedname}
@@ -742,7 +742,7 @@ export default function PrimarySearchAppBar({
             <Typography>Friends requests</Typography>
             {friendRequests.map((item) => {
               return (
-                <MenuItem sx={{ borderRadius: 5 }}>
+                <MenuItem key={`friendrequest${item.id}`} sx={{ borderRadius: 5 }}>
                   <Typography onClick={() => navigate(`/profile/${item.id}`)}>
                     {item.username}
                   </Typography>

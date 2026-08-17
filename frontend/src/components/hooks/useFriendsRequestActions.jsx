@@ -6,7 +6,7 @@ const useFriendsRequestActions = () => {
   const friendsaction = async ({ userId, type }) => {
     const data = await mutate({
       variables: {
-        userId: userId,
+        userId: Number(userId),
         type: type,
       }
     });

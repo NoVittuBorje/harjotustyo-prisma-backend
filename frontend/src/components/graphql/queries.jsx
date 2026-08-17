@@ -44,6 +44,21 @@ query Me {
       id
       name
     }
+    friends {
+      id
+      username
+      avatar
+    }
+    friendsRequests {
+      id
+      username
+      avatar
+    }
+    friendsRequestsSent {
+      id
+      username
+      avatar
+    }
     User_UserFriendRequestsSent_A {
       id
       username
@@ -221,7 +236,7 @@ export const GET_USER = gql`
       posts {
         id
       }
-      ownedDeeds {
+      ownedFeeds {
         id
       }
       comments {

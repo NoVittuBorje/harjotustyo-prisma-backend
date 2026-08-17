@@ -3,7 +3,7 @@ import { GET_USER_POSTS } from "../graphql/queries";
 const useGetUserPosts = (variables) => {
   const { data, error, loading, refetch, fetchMore, ...result } = useQuery(
     GET_USER_POSTS,
-    { variables: { offset: 0, userid: variables.id } },
+    { variables: { offset: 0, userid: Number(variables.id) } },
     {
       fetchPolicy: "network-only",
       nextFetchPolicy: "network-only",

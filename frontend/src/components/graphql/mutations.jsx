@@ -88,11 +88,11 @@ export const SUBSCRIBE = gql`
       relationship
       description
       work
-      feedsubs {
+      feedSubs {
         feedname
         id
       }
-      ownedfeeds {
+      ownedFeeds {
         feedname
       }
       id
@@ -427,7 +427,7 @@ export const FRIENDSREQUESTACTIONS = gql`
         avatar
         id
       }
-      friendsRequests {
+      friendsRequestsSent {
         username
         avatar
         id

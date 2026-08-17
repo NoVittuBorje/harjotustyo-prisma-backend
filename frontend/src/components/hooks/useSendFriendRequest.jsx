@@ -6,7 +6,7 @@ const useSendFriendRequest = () => {
   const SendFriendRequest = async ({ userId }) => {
     const data = await mutate({
       variables: {
-        userId: userId,
+        userId: Number(userId),
       }
     });
     return data;

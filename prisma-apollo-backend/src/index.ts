@@ -73,52 +73,66 @@ const start = async () => {
   await server.start();
 
   app.use(
-  "/",
-  cors<cors.CorsRequest>(),
-  express.json({ limit: "50mb" }),
-  expressMiddleware(server, {
-    context: async ({ req }) => {
-      let currentUser = null; 
-      
-      const auth = req ? req.headers.authorization : null;
-      if (auth && auth.startsWith("Bearer ")) {
-        try {
-          const decodedToken = <any>(
-            jwt.verify(auth.substring(7), process.env.JWT_SECRET!)
-          );
-          
-          currentUser = await prisma.user.findFirst({
-            where: { id: decodedToken.id },
-            include: {
-              ownedFeeds: true,
-              posts: true,
-              feedSubs: true,
-              likedComments: true,
-              dislikedComments: true,
-              likedPosts: true,
-              dislikedPosts: true,
-              chatrooms:true,
-              ownedRooms: true,
-              bannedFromFeeds: true,
-              moderatedFeeds: true,
-              chatroomInvites: true,
-              User_UserFriendRequests_A: true,
-              User_UserFriendRequests_B: true,
-              User_UserFriendRequestsSent_A: true,
-              User_UserFriendRequestsSent_B: true,
-              User_UserFriends_A: true,
-              User_UserFriends_B: true
-            },
-          });
-        } catch (error) {
-          console.error("JWT verification failed:", error);
-        }
-      }
+    "/",
+    cors<cors.CorsRequest>(),
+    express.json({ limit: "50mb" }),
+    expressMiddleware(server, {
+      context: async ({ req }) => {
+        let currentUser = null;
 
-      return { prisma, currentUser };
-    },
-  })
-);
+        const auth = req ? req.headers.authorization : null;
+        if (auth && auth.startsWith("Bearer ")) {
+          try {
+            const decodedToken = <any>(
+              jwt.verify(auth.substring(7), process.env.JWT_SECRET!)
+            );
+
+            currentUser = await prisma.user.findFirst({
+              where: { id: decodedToken.id },
+              include: {
+                ownedFeeds: true,
+                posts: true,
+                feedSubs: true,
+                likedComments: true,
+                dislikedComments: true,
+                likedPosts: true,
+                dislikedPosts: true,
+                chatrooms: true,
+                ownedRooms: true,
+                bannedFromFeeds: true,
+                moderatedFeeds: true,
+                chatroomInvites: true,
+                User_UserFriendRequests_A: {
+                  select: { id: true, username: true, avatar: true },
+                },
+                User_UserFriendRequests_B: {
+                  select: { id: true, username: true, avatar: true },
+                },
+                User_UserFriendRequestsSent_A: {
+                  select: { id: true, username: true, avatar: true },
+                },
+                User_UserFriendRequestsSent_B: {
+                  select: { id: true, username: true, avatar: true },
+                },
+                User_UserFriends_A: {
+                  select: { id: true, username: true, avatar: true },
+                },
+                User_UserFriends_B: {
+                  select: { id: true, username: true, avatar: true },
+                }
+              },
+            });
+          } catch (error) {
+            console.error("JWT verification failed:", error);
+          }
+        }
+        currentUser.friends = [ ...currentUser.User_UserFriends_B]
+        currentUser.friendsRequests = [...currentUser.User_UserFriendRequests_B]
+        currentUser.friendsRequestsSent = [...currentUser.User_UserFriendRequestsSent_B]
+        return { prisma, currentUser };
+      },
+    })
+  );
 
   const PORT = 3000;
 

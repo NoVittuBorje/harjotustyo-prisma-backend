@@ -72,6 +72,9 @@ const typeDefs =`#graphql
     User_UserFriendRequestsSent_B:[User]
     User_UserFriends_A:[User]
     User_UserFriends_B:[User]
+    friends:[User]
+    friendsRequests:[User]
+    friendsRequestsSent:[User]
     id: ID!
   }
   scalar Date
@@ -121,7 +124,7 @@ const typeDefs =`#graphql
     hello: String
 
     getuser(
-    id:String!
+    id:Int!
     ):User
 
     getfeed(
